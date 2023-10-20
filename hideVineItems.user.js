@@ -6,7 +6,7 @@
 // @grant       GM_setValue
 // @grant       GM_deleteValue
 // @grant       GM_addStyle
-// @version     1.0
+// @version     1.1
 // @description Adds a hide button to items offered in Amazon Vine.
 // ==/UserScript==
 
@@ -15,10 +15,15 @@ var hiddenCount = 0;
 {
   var messageSpan = document.createElement("span");
   messageSpan.classList.add("hideVineItems-message");
-  messageSpan.innerHTML = ` - <a id="hideVineItems-togglePage">hide <span id="hideVineItems-count">${hiddenCount}</span> items</a>`;
+  messageSpan.innerHTML = ` - <a id="hideVineItems-togglePage">hide <span id="hideVineItems-count">${hiddenCount}</span> items</a>, <a id="hideVineItems-hideAll">hide all (this page)</a>`;
   messageSpan.querySelector("#hideVineItems-togglePage").addEventListener("click", (e) => {
     document.querySelector(":root").classList.toggle("hideVineItems-showHidden");
-  })
+  });
+  messageSpan.querySelector("#hideVineItems-hideAll").addEventListener("click", (e) => {
+    document.querySelectorAll(".vvp-item-tile:not(.hideVineItems-hideASIN) .hideVineItems-toggleASIN").forEach( (hideLink) => {
+      hideLink.click();
+    })
+  });
   document.querySelector("#vvp-items-grid-container > p").append(messageSpan);
 }
 
