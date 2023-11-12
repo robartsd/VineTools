@@ -90,12 +90,10 @@ if(/vine\/(?:vine-reviews|orders)/.test(location)) {
   GM_setValue("#timestampIndex", timestampIndex);
   GM_setValue("#orderIndex", orderIndex);
 } else if(/order-history/.test(location)) {
-  console.log(location);
   document.querySelectorAll(".js-order-card").forEach((orderCard)=>{
     var orderIdNode = orderCard.querySelector(".yohtmlc-order-id .value");
     if(orderIdNode) {
       var orderID = orderIdNode.textContent.trim();
-      console.log(JSON.stringify(orderID));
       if(orderIndex.hasOwnProperty(orderID)) {
         var item = GM_getValue(orderIndex[orderID], {ASIN:orderIndex[orderID]});
         var shipmentInfoNode = orderCard.querySelector(".js-shipment-info-container>:first-child>:first-child");
