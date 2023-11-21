@@ -1,19 +1,49 @@
 // ==UserScript==
 // @name        Vine Activity Info
 // @namespace   https://github.com/robartsd/VineTools/
-// @match       https://www.amazon.com/vine/vine-reviews
-// @match       https://www.amazon.com/vine/orders
+// @match       https://www.amazon.com/vine/vine-reviews*
+// @match       https://www.amazon.com/vine/orders*
 // @match       https://www.amazon.com/gp/your-account/order-history*
+// @match       https://www.amazon.com/gp/your-account/order-details*
 // @grant       GM_getValue
 // @grant       GM_setValue
-// @version     0.3
+// @version     0.4
 // ==/UserScript==
-
-const regex_orderID = /(?<=orderID=)[^&]+/;
 
 var statusTimestamp = Date.now();
 
 var orderIndex = GM_getValue("#orderIndex", {});
+
+function orderIDfromURL(url) {
+  orderIDmatch = url.match(/orderID=([^&]+)/);
+  if(orderIDmatch) {
+    return orderIDmatch[1];
+  } else {
+    return undefined;
+  }
+}
+
+function updateShipmentInfo(item, shipmentInfo) {
+  var shipmentInfoHistory = item.shipmentInfoHistory ? item.shipmentInfoHistory : {};
+  if(item.shipmentInfo != shipmentInfo || !Object.values(shipmentInfoHistory).includes(shipmentInfo)) {
+    shipmentInfoHistory[statusTimestamp] = shipmentInfo;
+  }
+  Object.assign(item, {shipmentInfo, shipmentInfoHistory});
+}
+
+function updateOrderStatus(orderID, node) {
+  var item = GM_getValue(orderIndex[orderID], {ASIN:orderIndex[orderID]});
+  var shipmentInfoNode = node.querySelector(".js-shipment-info-container>:first-child>:first-child");
+  if(item && shipmentInfoNode) {
+    updateShipmentInfo(item, shipmentInfoNode.textContent.trim());
+  } else if(item) {
+    var orderAlertNode = node.querySelector(".a-alert-heading");
+    if(orderAlertNode && orderAlertNode.textContent == "This order has been cancelled.") {
+      updateShipmentInfo(item, "Cancelled");
+    }
+  }
+  GM_setValue(orderIndex[orderID], item);
+}
 
 if(/vine\/(?:vine-reviews|orders)/.test(location)) {
   var timestampIndex = GM_getValue("#timestampIndex",{});
@@ -55,7 +85,7 @@ if(/vine\/(?:vine-reviews|orders)/.test(location)) {
     }
     if(itemOrderLinkNode) {
       var orderDetailsLink = itemOrderLinkNode.href;
-      var orderID = orderDetailsLink.match(regex_orderID)[0];
+      var orderID = orderIDfromURL(orderDetailsLink);
       Object.assign(item, {orderDetailsLink, orderID});
       orderIndex[orderID] = ASIN;
     }
@@ -95,18 +125,13 @@ if(/vine\/(?:vine-reviews|orders)/.test(location)) {
     if(orderIdNode) {
       var orderID = orderIdNode.textContent.trim();
       if(orderIndex.hasOwnProperty(orderID)) {
-        var item = GM_getValue(orderIndex[orderID], {ASIN:orderIndex[orderID]});
-        var shipmentInfoNode = orderCard.querySelector(".js-shipment-info-container>:first-child>:first-child");
-        if(item && shipmentInfoNode) {
-          var shipmentInfo = shipmentInfoNode.textContent.trim();
-          var shipmentInfoHistory = item.shipmentInfoHistory ? item.shipmentInfoHistory : {};
-          if(item.shipmentInfo != shipmentInfo || !Object.values(shipmentInfoHistory).includes(shipmentInfo)) {
-            shipmentInfoHistory[statusTimestamp] = shipmentInfo;
-          }
-          Object.assign(item, {shipmentInfo, shipmentInfoHistory});
-          GM_setValue(orderIndex[orderID], item);
-        }
+        updateOrderStatus(orderID, orderCard);
       }
     }
   });
+} else if(/order-details/.test(location)) {
+  orderID = orderIDfromURL(location);
+  if(orderIndex.hasOwnProperty(orderID)) {
+    updateOrderStatus(orderID, document);
+  }
 }
