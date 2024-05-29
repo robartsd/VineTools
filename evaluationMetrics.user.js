@@ -12,7 +12,7 @@ const periodEnd = new Date(parseInt(document.querySelector("#vvp-eval-end-stamp"
 
 document.querySelector("#vvp-evaluation-period-tooltip-trigger").innerText = `Evaluation period: ${periodStart.toLocaleDateString()} - ${periodEnd.toLocaleString()}`;
 
-const percent = Math.round(parseFloat(document.querySelector(""#vvp-perc-reviewed-metric-display strong").innerText));
+const percent = Math.round(parseFloat(document.querySelector("#vvp-perc-reviewed-metric-display strong").innerText));
 if (percent > 0) {
   const count = parseInt(document.querySelector("#vvp-num-reviewed-metric-display strong").innerText);
   const orderEstimate = Math.round(count/percent * 100);
