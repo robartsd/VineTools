@@ -3,7 +3,7 @@
 // @namespace   Violentmonkey Scripts
 // @match       https://www.amazon.com/vine/account*
 // @grant       none
-// @version     1.0.2
+// @version     1.0.3
 // @description Calculates approximate order total, displays evaluation period end time, and colors the activity bars if you are behind target
 // ==/UserScript==
 
@@ -17,7 +17,7 @@ if (percent > 0) {
   const count = parseInt(document.querySelector("#vvp-num-reviewed-metric-display strong").innerText);
   const orderEstimate = Math.round(count/percent * 100);
 
-  document.querySelector("#vvp-perc-reviewed-metric-display p").innerHTML = `You have reviewed <strong>${percent}%<\strong> of approximately ${orderEstimate} Vine items this period`;
+  document.querySelector("#vvp-perc-reviewed-metric-display p").innerHTML = `You have reviewed <strong>${percent}%</strong> of approximately ${orderEstimate} Vine items this period`;
 
   const periodFraction = ((new Date()).setUTCHours(0,0,0,0) - periodStart) / (periodEnd - periodStart);
   if (periodFraction > 0) {
