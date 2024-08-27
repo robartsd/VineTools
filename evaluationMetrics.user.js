@@ -3,7 +3,7 @@
 // @namespace   Violentmonkey Scripts
 // @match       https://www.amazon.com/vine/account*
 // @grant       none
-// @version     1.0.3
+// @version     1.1.0
 // @description Calculates approximate order total, displays evaluation period end time, and colors the activity bars if you are behind target
 // ==/UserScript==
 
@@ -15,15 +15,24 @@ document.querySelector("#vvp-evaluation-period-tooltip-trigger").innerText = `Ev
 const percent = Math.round(parseFloat(document.querySelector("#vvp-perc-reviewed-metric-display strong").innerText));
 if (percent > 0) {
   const count = parseInt(document.querySelector("#vvp-num-reviewed-metric-display strong").innerText);
-  const orderEstimate = Math.round(count/percent * 100);
+  const orderMin = Math.ceil(count/(percent+.5) * 100);
+  const orderMax = Math.floor(count/(percent-.5) * 100);
+  const targetMin = Math.ceil(orderMin * .9) - count;
+  const targetMax = Math.ceil(orderMax * .9) - count;
+  const orderEstimate = orderMin == orderMax ? orderMax : `${orderMin}&ndash;${orderMax}`;
+  const targetRequired = targetMin == targetMax ? targetMax : `${targetMin}&ndash;${targetMax}`;
 
-  document.querySelector("#vvp-perc-reviewed-metric-display p").innerHTML = `You have reviewed <strong>${percent}%</strong> of approximately ${orderEstimate} Vine items this period`;
+  if (targetMax > 0) {
+    document.querySelector("#vvp-perc-reviewed-metric-display p").innerHTML = `You have reviewed <strong>${percent}%</strong> of ${orderEstimate} items; review ${targetRequired} more to reach 90%`;
+  } else {
+    document.querySelector("#vvp-perc-reviewed-metric-display p").innerHTML = `You have reviewed <strong>${percent}%</strong> of ${orderEstimate} Vine items this period`;
+  }
 
   const periodFraction = ((new Date()).setUTCHours(0,0,0,0) - periodStart) / (periodEnd - periodStart);
   if (periodFraction > 0) {
-    const awaitingEstimate = orderEstimate - count;
+    const awaitingEstimate = orderMax - count;
     const projectedCount = count / periodFraction;
-    const projectedOrders = orderEstimate / periodFraction;
+    const projectedOrders = orderMin / periodFraction;
     const projectedPercent = (projectedOrders - awaitingEstimate) / projectedOrders;
     const countBar = document.querySelector("#vvp-num-reviewed-metric-display .animated-progress span");
     const percentBar = document.querySelector("#vvp-perc-reviewed-metric-display .animated-progress span");
