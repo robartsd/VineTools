@@ -3,7 +3,7 @@
 // @namespace   Violentmonkey Scripts
 // @match       https://www.amazon.com/vine/account*
 // @grant       none
-// @version     1.1.0
+// @version     1.1.1
 // @description Calculates approximate order total, displays evaluation period end time, and colors the activity bars if you are behind target
 // ==/UserScript==
 
@@ -15,8 +15,9 @@ document.querySelector("#vvp-evaluation-period-tooltip-trigger").innerText = `Ev
 const percent = Math.round(parseFloat(document.querySelector("#vvp-perc-reviewed-metric-display strong").innerText));
 if (percent > 0) {
   const count = parseInt(document.querySelector("#vvp-num-reviewed-metric-display strong").innerText);
-  const orderMin = Math.ceil(count/(percent+.5) * 100);
-  const orderMax = Math.floor(count/(percent-.5) * 100);
+  const orderCount = Math.round(count/percent * 100);
+  const orderMin = Math.min(Math.ceil(count/(percent+.5) * 100), orderCount);
+  const orderMax = Math.max(Math.floor(count/(percent-.5) * 100), orderCount);
   const targetMin = Math.ceil(orderMin * .9) - count;
   const targetMax = Math.ceil(orderMax * .9) - count;
   const orderEstimate = orderMin == orderMax ? orderMax : `${orderMin}&ndash;${orderMax}`;
