@@ -3,38 +3,48 @@
 // @namespace   Violentmonkey Scripts
 // @match       https://www.amazon.com/vine/account*
 // @grant       none
-// @version     1.1.1
+// @version     1.2
 // @description Calculates approximate order total, displays evaluation period end time, and colors the activity bars if you are behind target
 // ==/UserScript==
 
-const periodStart = new Date(parseInt(document.querySelector("#vvp-eval-start-stamp").innerText));
 const periodEnd = new Date(parseInt(document.querySelector("#vvp-eval-end-stamp").innerText));
 
-document.querySelector("#vvp-evaluation-period-tooltip-trigger").innerText = `Evaluation period: ${periodStart.toLocaleDateString()} - ${periodEnd.toLocaleString()}`;
+document.querySelector("#vvp-evaluation-date-string > strong").innerText = periodEnd.toLocaleString();
 
-const percent = Math.round(parseFloat(document.querySelector("#vvp-perc-reviewed-metric-display strong").innerText));
+const percent = Math.round(parseFloat(document.querySelector("#vvp-perc-reviewed-metric-display strong").innerText)); //Vine seems to always round to whole percent but sometimes displays inaccurate tenths
 if (percent > 0) {
-  const count = parseInt(document.querySelector("#vvp-num-reviewed-metric-display strong").innerText);
+  const metricsBox = document.querySelector("#vvp-vine-activity-metrics-box");
+  metricsBox.dataset.percent = percent;
+  const count = parseInt(document.querySelector("#vvp-num-reviewed-metric-display strong").innerText.replaceAll(/\D+/g,'')); //review count should alwasy be integer remove possible thousands separator
+  metricsBox.dataset.count = count;
   const orderCount = Math.round(count/percent * 100);
+  metricsBox.dataset.orderCountEstimate = orderCount;
   const orderMin = Math.min(Math.ceil(count/(percent+.5) * 100), orderCount);
   const orderMax = Math.max(Math.floor(count/(percent-.5) * 100), orderCount);
-  const targetMin = Math.ceil(orderMin * .9) - count;
+  const targetMin = Math.max(Math.ceil(orderMin * .9) - count, 0);
   const targetMax = Math.ceil(orderMax * .9) - count;
   const orderEstimate = orderMin == orderMax ? orderMax : `${orderMin}&ndash;${orderMax}`;
   const targetRequired = targetMin == targetMax ? targetMax : `${targetMin}&ndash;${targetMax}`;
 
-  if (targetMax > 0) {
+  if (targetMin > 0) {
     document.querySelector("#vvp-perc-reviewed-metric-display p").innerHTML = `You have reviewed <strong>${percent}%</strong> of ${orderEstimate} items; review ${targetRequired} more to reach 90%`;
+  } else if (targetMax > 0) {
+    document.querySelector("#vvp-perc-reviewed-metric-display p").innerHTML = `You have reviewed <strong>${percent}%</strong> of ${orderEstimate} items; review ${targetMax} more to be sure you're over 90%`;
   } else {
     document.querySelector("#vvp-perc-reviewed-metric-display p").innerHTML = `You have reviewed <strong>${percent}%</strong> of ${orderEstimate} Vine items this period`;
   }
 
+  const periodStart = new Date(parseInt(document.querySelector("#vvp-eval-start-stamp").innerText));
   const periodFraction = ((new Date()).setUTCHours(0,0,0,0) - periodStart) / (periodEnd - periodStart);
   if (periodFraction > 0) {
     const awaitingEstimate = orderMax - count;
+    metricsBox.dataset.awaitingReviewEstimate = awaitingEstimate;
     const projectedCount = count / periodFraction;
+    metricsBox.dataset.projectedReviewCount = projectedCount.toFixed(1);
     const projectedOrders = orderMin / periodFraction;
+    metricsBox.dataset.projectedOrderCount = projectedOrders.toFixed(1);
     const projectedPercent = (projectedOrders - awaitingEstimate) / projectedOrders;
+    metricsBox.dataset.projectedReviewPercent = (projectedPercent * 100).toFixed(1);
     const countBar = document.querySelector("#vvp-num-reviewed-metric-display .animated-progress span");
     const percentBar = document.querySelector("#vvp-perc-reviewed-metric-display .animated-progress span");
 
