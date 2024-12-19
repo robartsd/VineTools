@@ -25,6 +25,11 @@ if (percent > 0) {
   const targetMax = Math.ceil(orderMax * .9) - count;
   const orderEstimate = orderMin == orderMax ? orderMax : `${orderMin}&ndash;${orderMax}`;
   const targetRequired = targetMin == targetMax ? targetMax : `${targetMin}&ndash;${targetMax}`;
+  const awaitingEstimate = orderCount - count;
+  metricsBox.dataset.awaitingReviewEstimate = awaitingEstimate;
+  if (awaitingEstimate > 0) {
+    document.querySelector("#vvp-num-reviewed-metric-display p").innerHTML = `You reviewed <strong>${count}</strong> items; approximately ${awaitingEstimate} ordered this period await review`
+  }
 
   if (targetMin > 0) {
     document.querySelector("#vvp-perc-reviewed-metric-display p").innerHTML = `You have reviewed <strong>${percent}%</strong> of ${orderEstimate} items; review ${targetRequired} more to reach 90%`;
@@ -36,12 +41,10 @@ if (percent > 0) {
 
   const periodStart = new Date(parseInt(document.querySelector("#vvp-eval-start-stamp").innerText));
   const periodFraction = ((new Date()).setUTCHours(0,0,0,0) - periodStart) / (periodEnd - periodStart);
-  if (periodFraction > 0) {
-    const awaitingEstimate = orderMax - count;
-    metricsBox.dataset.awaitingReviewEstimate = awaitingEstimate;
+  if (periodFraction > 0 && periodFraction < 1) {
     const projectedCount = count / periodFraction;
     metricsBox.dataset.projectedReviewCount = projectedCount.toFixed(1);
-    const projectedOrders = orderMin / periodFraction;
+    const projectedOrders = orderCount / periodFraction;
     metricsBox.dataset.projectedOrderCount = projectedOrders.toFixed(1);
     const projectedPercent = (projectedOrders - awaitingEstimate) / projectedOrders;
     metricsBox.dataset.projectedReviewPercent = (projectedPercent * 100).toFixed(1);
