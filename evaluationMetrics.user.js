@@ -3,7 +3,7 @@
 // @namespace   Violentmonkey Scripts
 // @match       https://www.amazon.com/vine/account*
 // @grant       none
-// @version     1.2
+// @version     1.2.1
 // @description Calculates approximate order total, displays evaluation period end time, and colors the activity bars if you are behind target
 // ==/UserScript==
 
