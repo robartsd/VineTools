@@ -3,7 +3,7 @@
 // @namespace   Violentmonkey Scripts
 // @match       https://www.amazon.com/vine/account*
 // @grant       none
-// @version     1.2.1
+// @version     1.3.0
 // @description Calculates approximate order total, displays evaluation period end time, and colors the activity bars if you are behind target
 // ==/UserScript==
 
@@ -19,24 +19,30 @@ if (percent > 0) {
   metricsBox.dataset.count = count;
   const orderCount = Math.round(count/percent * 100);
   metricsBox.dataset.orderCountEstimate = orderCount;
-  const orderMin = Math.min(Math.ceil(count/(percent+.5) * 100), orderCount);
-  const orderMax = Math.max(Math.floor(count/(percent-.5) * 100), orderCount);
+  // order min/max estimate assumes that percentage is rounded down
+  const orderMin = Math.floor(count/(percent + 1) * 100) + 1;
+  metricsBox.dataset.orderCountMin = orderMin;
+  const orderMax = Math.max(Math.floor(count/(percent) * 100), orderMin);
+  metricsBox.dataset.orderCountMax = orderMax;
+  const awaitingMin = orderMin - count;
+  metricsBox.dataset.awaitingCountMin = awaitingMin;
+  const awaitingMax = orderMax - count;
+  metricsBox.dataset.awaitingCountMax = awaitingMax;
   const targetMin = Math.max(Math.ceil(orderMin * .9) - count, 0);
+  metricsBox.dataset.targetMin = targetMin;
   const targetMax = Math.ceil(orderMax * .9) - count;
+  metricsBox.dataset.targetMax = targetMax;
   const orderEstimate = orderMin == orderMax ? orderMax : `${orderMin}&ndash;${orderMax}`;
+  const awaitingEstimate = awaitingMin == awaitingMax ? awaitingMax : `${awaitingMin}&ndash;${awaitingMax}`;
   const targetRequired = targetMin == targetMax ? targetMax : `${targetMin}&ndash;${targetMax}`;
-  const awaitingEstimate = orderCount - count;
-  metricsBox.dataset.awaitingReviewEstimate = awaitingEstimate;
-  if (awaitingEstimate > 0) {
-    document.querySelector("#vvp-num-reviewed-metric-display p").innerHTML = `You reviewed <strong>${count}</strong> items; approximately ${awaitingEstimate} ordered this period await review`
+  if (awaitingMax > 0) {
+    document.querySelector("#vvp-num-reviewed-metric-display p").innerHTML = `<strong>${count}</strong> reviews approved; ${awaitingEstimate} delivered items await review/approval`
   }
 
-  if (targetMin > 0) {
-    document.querySelector("#vvp-perc-reviewed-metric-display p").innerHTML = `You have reviewed <strong>${percent}%</strong> of ${orderEstimate} items; review ${targetRequired} more to reach 90%`;
-  } else if (targetMax > 0) {
-    document.querySelector("#vvp-perc-reviewed-metric-display p").innerHTML = `You have reviewed <strong>${percent}%</strong> of ${orderEstimate} items; review ${targetMax} more to be sure you're over 90%`;
+  if (targetMax > 0) {
+    document.querySelector("#vvp-perc-reviewed-metric-display p").innerHTML = `Reviews approved for <strong>${percent}%</strong> of ${orderEstimate} delivered items; ${targetRequired} more required to reach 90%`;
   } else {
-    document.querySelector("#vvp-perc-reviewed-metric-display p").innerHTML = `You have reviewed <strong>${percent}%</strong> of ${orderEstimate} Vine items this period`;
+    document.querySelector("#vvp-perc-reviewed-metric-display p").innerHTML = `Reviews approved for <strong>${percent}%</strong> of ${orderEstimate} delivered items`;
   }
 
   const periodStart = new Date(parseInt(document.querySelector("#vvp-eval-start-stamp").innerText));
@@ -46,7 +52,7 @@ if (percent > 0) {
     metricsBox.dataset.projectedReviewCount = projectedCount.toFixed(1);
     const projectedOrders = orderCount / periodFraction;
     metricsBox.dataset.projectedOrderCount = projectedOrders.toFixed(1);
-    const projectedPercent = (projectedOrders - awaitingEstimate) / projectedOrders;
+    const projectedPercent = (projectedOrders - awaitingMax) / projectedOrders;
     metricsBox.dataset.projectedReviewPercent = (projectedPercent * 100).toFixed(1);
     const countBar = document.querySelector("#vvp-num-reviewed-metric-display .animated-progress span");
     const percentBar = document.querySelector("#vvp-perc-reviewed-metric-display .animated-progress span");
@@ -68,3 +74,4 @@ if (percent > 0) {
     }
   }
 }
+
