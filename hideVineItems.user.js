@@ -71,8 +71,8 @@ document.querySelectorAll(".vvp-item-tile").forEach( (tile) => {
 updateCount();
 
 GM_addStyle(`
-.hideVineItems-hideASIN {
-  display:none;
+html:not(.hideVineItems-showHidden) .hideVineItems-hideASIN {
+  display:none !important;
 }
 .vvp-item-tile-content {
   position: relative;
@@ -92,7 +92,6 @@ GM_addStyle(`
   display: inline;
 }
 .hideVineItems-showHidden .hideVineItems-hideASIN {
-  display:unset;
   opacity: 50%
 }
 `);
