@@ -3,13 +3,15 @@
 // @namespace   Violentmonkey Scripts
 // @match       https://www.amazon.com/vine/account*
 // @grant       none
-// @version     1.4.0
+// @version     1.4.1
 // @description Calculates approximate order total, displays evaluation period end time, and colors the activity bars if you are behind target
 // ==/UserScript==
 
 const periodEnd = new Date(parseInt(document.querySelector("#vvp-eval-end-stamp").innerText));
 
-document.querySelector("#vvp-evaluation-date-string > strong").innerText = periodEnd.toLocaleString();
+if (document.querySelector("#vvp-evaluation-date-string > strong")) {
+  document.querySelector("#vvp-evaluation-date-string > strong").innerText = periodEnd.toLocaleString();
+}
 
 const percent = Math.round(parseFloat(document.querySelector("#vvp-perc-reviewed-metric-display p:nth-child(-n+2) *:is(strong, .a-size-extra-large)").innerText)); //Vine seems to always round to whole percent but sometimes displays inaccurate tenths
 if (percent > 0) {
